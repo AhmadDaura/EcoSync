@@ -21,13 +21,18 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.ui.theme.GlassCardBg
 import com.example.ui.theme.GlassCardBorder
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BuyPowerScreen(onBack: () -> Unit) {
     var meterNumber by remember { mutableStateOf("") }
     var isValidated by remember { mutableStateOf(false) }
+    var isValidating by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var customerName by remember { mutableStateOf("") }
+    var customerAddress by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
     Box(modifier = Modifier.fillMaxSize().background(Color.Transparent)) {
@@ -85,17 +90,33 @@ fun BuyPowerScreen(onBack: () -> Unit) {
                         Button(
                             onClick = { 
                                 if (meterNumber.length in 11..13) {
-                                    isValidated = true
+                                    isValidating = true
                                     errorMessage = null
+                                    scope.launch {
+                                        val response = com.example.network.BuyPowerApiService.validateMeter(meterNumber)
+                                        isValidating = false
+                                        if (response.isValid) {
+                                            isValidated = true
+                                            customerName = response.name
+                                            customerAddress = response.address
+                                        } else {
+                                            errorMessage = response.errorMessage ?: "Validation failed"
+                                        }
+                                    }
                                 } else {
                                     errorMessage = "Please enter a valid 11-13 digit meter number"
                                 }
                             },
                             modifier = Modifier.fillMaxWidth().height(50.dp),
+                            enabled = !isValidating,
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
-                            Text("Validate Meter", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
+                            if (isValidating) {
+                                CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
+                            } else {
+                                Text("Validate Meter", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
+                            }
                         }
                     } else {
                         Column(
@@ -115,9 +136,9 @@ fun BuyPowerScreen(onBack: () -> Unit) {
                                         Text("Meter Validated Successfully", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                                     }
                                     Spacer(modifier = Modifier.height(12.dp))
-                                    Text("Customer Name: Alex Rivera", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+                                    Text("Customer Name: $customerName", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
                                     Spacer(modifier = Modifier.height(4.dp))
-                                    Text("Address: Block B, 123 Energy Lane", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text("Address: $customerAddress", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
                             
