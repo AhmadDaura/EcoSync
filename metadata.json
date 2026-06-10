@@ -1,0 +1,6 @@
+{
+  "name": "EcoSync",
+  "description": "A smart home energy and water tracking app that optimizes appliance usage and automations to reduce environmental impact and lower utility bills.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
